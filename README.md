@@ -12,13 +12,13 @@ No Dockerfiles or automation scripts are required. Run the commands yourself and
 
 - A Linux host with Docker or Podman installed
 - Internet access
-- A compatible host cgroup configuration for systemd
+- A Linux host with cgroup support for running systemd inside containers
 
 These instructions are intended for native Linux. Container behavior may differ on Docker Desktop or Podman machines.
 
 ## 1. Pull the Rocky Linux Image
 
-Choose your container engine.
+Choose either Docker or Podman and follow the corresponding commands throughout this guide.
 
 **Docker:**
 
@@ -71,7 +71,7 @@ docker exec -it rocky10 bash
 - `rocky10` is the container name.
 - `bash` starts a shell.
 
-**Note:** This is a minimal Docker command. Depending on the host, systemd may require additional cgroup configuration; `--privileged` alone does not guarantee compatibility.
+**Note:** This is a minimal Docker command. Systemd needs appropriate cgroup access to manage services. On some hosts, additional cgroup configuration may be required even when using `--privileged`.
 
 ## 3. Run Rocky Linux Using Podman
 
@@ -120,9 +120,11 @@ systemctl status
 - `systemctl` manages and inspects systemd.
 - `status` shows the system manager's status.
 
+This checks whether the systemd manager responds. Individual services may still have limitations depending on the container runtime and host configuration.
+
 ## 5. Host Networking
 
-Both run commands use `--network host`. On native Linux, applications inside the container share the host's network namespace, so you do not need to publish ports with `-p`.
+Both run commands use `--network host`. On native Linux, the container shares the host's network namespace, so you do not need to publish individual ports with `-p` (the port-publishing option).
 
 For example, if an HTTP application is running inside the container on port 8080, run this **on the host**:
 
@@ -134,11 +136,19 @@ curl http://localhost:8080
 - `localhost` refers to the host's loopback interface.
 - `8080` is the port used by the example application.
 
-The application must already be running. Host and container services can conflict when they use the same port. Services listening on external interfaces may be accessible from other machines. Rootless Podman generally cannot bind ports below 1024 without additional host configuration.
+The application must already be running and listening on the appropriate address and port. Host and container services can conflict when they try to use the same address and port. Services listening on external interfaces may be accessible from other machines. Rootless Podman generally cannot bind ports below 1024 without additional host configuration.
 
 ## 6. Manage the Container
 
-Run these commands **on the host**.
+If you are still inside the container shell, return to the host first:
+
+```bash
+exit
+```
+
+- `exit` closes the current shell without stopping the container.
+
+Run the following commands **on the host**.
 
 ### List running containers
 
@@ -268,6 +278,7 @@ Systemd requires appropriate cgroup access. The minimal commands above may need 
 - [Rocky Linux Container Images](https://hub.docker.com/r/rockylinux/rockylinux)
 - [Docker Documentation](https://docs.docker.com/)
 - [Podman Documentation](https://docs.podman.io/)
+- [systemd Documentation](https://systemd.io/)
 
 ## Disclaimer
 
